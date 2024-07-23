@@ -1,0 +1,27 @@
+{
+    "mode_list": [
+        {
+            "pack_begin": "aaee",
+            "pack_end": "eefc",
+            "format_cmds": [
+                "{aaee}*",
+                "*{eefc}",
+                "(2)*",
+                "(4)*",
+                "(4)*",
+                "#[+4]"
+            ]
+        },
+        {
+            "pack_begin": "aaee",
+            "pack_end": "eefc",
+            "format_cmds": [
+                "{aaee}*",
+                "*{eefc}",
+                "(2)*",
+                "(4)*",
+                "#[+4+2]"
+            ]
+        }
+    ]
+}

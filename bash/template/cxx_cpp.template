@@ -1,0 +1,28 @@
+
+#ifndef {%2}_H
+#define {%2}_H
+
+#include <iostream>
+
+class {%1}
+{
+public:
+    {%1}();
+    ~{%1}();
+
+protected:
+
+private:
+
+};
+#endif // {%2}_H
+#==========#
+#include "{%1}.h"
+
+{%1}::{%1}()
+{
+}
+
+{%1}::~{%1}()
+{
+}

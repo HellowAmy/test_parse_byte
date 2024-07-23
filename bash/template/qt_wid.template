@@ -1,0 +1,31 @@
+
+#ifndef {%2}_H
+#define {%2}_H
+
+#include <QWidget>
+
+class {%1} : public QWidget
+{
+    Q_OBJECT
+public:
+    {%1}(QWidget *parent = nullptr);
+    ~{%1}();
+
+signals:
+
+protected:
+
+private:
+
+};
+#endif // {%2}_H
+#==========#
+#include "{%1}.h"
+
+{%1}::{%1}(QWidget *parent) : QWidget(parent)
+{
+}
+
+{%1}::~{%1}()
+{
+}
