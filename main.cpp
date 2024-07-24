@@ -97,6 +97,7 @@ void test_3()
         "<4>(4)=2",
         "(8*)",
         "(*4)",
+		":1:(0){9000}",
         "[+1+3](1){9000}",
         "[+5](1){9090}",
         "[+4]",
@@ -104,6 +105,7 @@ void test_3()
 	auto ret = parse_cmd::parse_cmds(ss,vec);
 	print_con(ret,1);
 }
+
 void test_4()
 {
 	std::string s1 = "aaee*";
@@ -116,6 +118,49 @@ void test_4()
 	vlogd($(s2));
 }
 
+void test_5()
+{
+	std::string ss = "aaee1ffff0800490000000424c03000100000f9090900004c1b8c1b8c1b8c1b89a9deefc";
+	std::vector<std::string> vec {
+		"{aaee*}",
+        "{*eefc}",
+        "{424c*}",
+        "(14*)",
+        "<4>=1",
+        "(8*)",
+        "(*4)",
+		":1:(0){9000}",
+        "[+1+3]",
+		":1:(0){9090}",
+        "[+5]",
+        "[+4]",
+	};
+	auto ret = parse_cmd::parse_cmds(ss,vec);
+	print_con(ret,1);
+}
+
+void test_6()
+{
+	std::string ss = "aaee1ffff0800490000000424c03000100000f9090900004c1b8c1b8c1b8c1b89a9deefc";
+	ss += "aaee1ffff0800490000000424c03000100000f9090000004c1b8c1b8c1b8c1b89a9deefc";
+	std::vector<std::string> vec {
+        "<4>(22)=1",
+		"{aaee*}",
+        "{*eefc}",
+        "{424c*}",
+        "(14*)",
+        "<4>=0",
+        "(8*)",
+        "(*4)",
+		":1:(0){9000}",
+        "[+1+3]",
+		":1:(0){9090}",
+        "[+5]",
+        "[+4]",
+	};
+	auto ret = parse_cmd::parse_pack(ss,vec,"aaee","eefc");
+	print_con(ret,1);
+}
 
 int main(int argc, char *argv[])
 {
@@ -127,11 +172,13 @@ int main(int argc, char *argv[])
 	}
 
 
-#if 0
+#if 1
 	// test_1();
 	// test_2();
-	test_3();
+	// test_3();
 	// test_4();
+	// test_5();
+	test_6();
 	return 0;
 #endif
 

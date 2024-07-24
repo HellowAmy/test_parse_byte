@@ -10,7 +10,7 @@
 #include <sstream>
 
 #include "json.hpp"
-#include "Tvlog.h"
+// #include "Tvlog.h"
 
 using njson = nlohmann::json;
 
@@ -145,6 +145,7 @@ struct parse_cmd
     struct ct_data
     {
         bool run = true;
+        int skip = 0;
         std::deque<std::string> star;
         std::deque<std::string> front;
         std::deque<std::string> back;
@@ -201,6 +202,12 @@ struct parse_cmd
             {
                 break;
             }
+            if(data.skip > 0)
+            {
+                data.skip--;
+                continue;
+            }
+
             char first = cmd[0];
             if(first == '{')
             {
@@ -218,6 +225,10 @@ struct parse_cmd
             {
                 parse_list(data,cmd);
             }
+            if(first == ':')
+            {
+                parse_skip_cond(data,cmd);
+            }
         }
 
         for(auto a: data.front)
@@ -229,9 +240,6 @@ struct parse_cmd
             ret.push_back(a);
         }
 
-        print_con(data.front,1);
-        print_con(data.back,1);
-        print_con(data.star,1);
         return ret;
     }
 
@@ -240,7 +248,6 @@ struct parse_cmd
         en_dire ed = find_star_dire(cmd);
         std::string sub = section_flg(cmd,'{','}');
         less_star(sub);
-        vlogd($(sub));
 
         std::tuple<int,int> offset = parse_format::find_str_sub(data.data,sub);
         int ileft = std::get<0>(offset);
@@ -281,6 +288,23 @@ struct parse_cmd
         }
     }
 
+    static void parse_skip_cond(ct_data &data,std::string cmd)
+    {
+        std::string snum = section_flg(cmd,':',':');
+        std::string sindex = section_flg(cmd,'(',')');
+        std::string sdata = section_flg(cmd,'{','}');
+
+        int index = from_string<int>(sindex);
+        
+        if(data.star.size() > index)
+        {
+            if(data.star[index] != sdata)
+            {
+                data.skip = from_string<int>(snum);
+            }
+        }
+    }
+
     static void parse_star(ct_data &data,std::string cmd)
     {
         if(find_exist(cmd,'('))
@@ -304,7 +328,8 @@ struct parse_cmd
         int num = from_string<int>(snum);
 
         auto tup = parse_format::carve_left(data.data,num);
-        data.star.push_back(std::get<0>(tup));
+        int index = equal_num(cmd);
+        add_star(data,index,std::get<0>(tup));
     }
 
     static void parse_star_find(ct_data &data,std::string cmd)
@@ -318,7 +343,8 @@ struct parse_cmd
         int iright = std::get<1>(offset) + 1;
 
         auto tup = parse_format::carve_left(std::string(data.data.begin() + iright,data.data.end()),num);
-        data.star.push_back(std::get<0>(tup));
+        int index = equal_num(cmd);
+        add_star(data,index,std::get<0>(tup));
     }
 
     static void parse_star_offset(ct_data &data,std::string cmd)
@@ -330,7 +356,8 @@ struct parse_cmd
         int offset = from_string<int>(soffset);
 
         auto tup = parse_format::carve_left(std::string(data.data.begin() + offset,data.data.end()) ,num);
-        data.star.push_back(std::get<0>(tup));
+        int index = equal_num(cmd);
+        add_star(data,index,std::get<0>(tup));
     }
 
     static void parse_list(ct_data &data,std::string cmd)
@@ -430,11 +457,11 @@ struct parse_cmd
         for(int i=0;i<str.size();i++)
         {
             char c = str[i];
-            if(fbegin == c)
+            if(fbegin == c && ibegin == -1)
             {
                 ibegin = i;
             }
-            else if(c == fend)
+            else if(c == fend && iend == -1)
             {
                 iend = i;
             }
@@ -457,6 +484,28 @@ struct parse_cmd
                 return ;
             }
         }
+    }
+
+    static void add_star(ct_data &data,int index,std::string val)
+    {
+        if(data.star.size() <= index)
+        {
+            data.star.resize(index + 1);
+        }
+        data.star[index] = val;
+    }
+
+    static int equal_num(std::string &str)
+    {
+        for(int i=0;i<str.size();i++)
+        {
+            char c = str[i];
+            if(c == '=')
+            {
+                return from_string<int>(std::string(str.begin() +i +1,str.end()));
+            }
+        }
+        return -1;
     }
 
     static std::vector<std::string> section_flg(std::string str,char flg,bool skip_empty = true)
