@@ -17,6 +17,106 @@ using namespace std;
 
 std::function<void (pack_udp_t *)> watch_iface_udp::_fn_data_cb = nullptr;
 
+
+
+void test_1()
+{
+	std::string ss = "aa123456789bb";
+	std::vector<std::string> vec {
+		"<4>=0",
+		"<4>(5)=1",
+		"<4>{45}=2",
+	};
+	parse_cmd::parse_cmds(ss,vec);
+}
+
+void test_2()
+{
+	std::string ss = "aaee1ffff0800490000000424c03000100000f9090000004c1b8c1b8c1b8c1b89a9deefc";
+	std::vector<std::string> vec {
+		"{aaee}*",
+        "*{eefc}",
+        "{424c}*",
+        "(14)*",
+        "<4>=0",
+        "(8)*",
+        "*(4)",
+        "#(0){9000}[+1+3]",
+        "#(0){9090}[+5]",
+        "#[+4]",
+	};
+	auto ret = parse_cmd::parse_cmds(ss,vec);
+	print_con(ret,1);
+/*
+| size: 12
+| aaee
+| 1ffff0800490000000424c
+| 03000100000f90
+| 90000004
+| c
+| 1b8
+| c
+| 1b8
+| c
+| 1b8
+| c
+| 1b8
+| size: 2
+| 9a9d
+| eefc
+| size: 1
+| 9000
+| size: 14
+| aaee
+| 1ffff0800490000000424c
+| 03000100000f90
+| 90000004
+| c
+| 1b8
+| c
+| 1b8
+| c
+| 1b8
+| c
+| 1b8
+| 9a9d
+| eefc
+*/
+}
+
+void test_3()
+{
+	std::string ss = "aaee1ffff0800490000000424c03000100000f9090000004c1b8c1b8c1b8c1b89a9deefc";
+	std::vector<std::string> vec {
+        "<4>{ffff}=0",
+		"{aaee*}",
+        "{*eefc}",
+        "{424c*}",
+        "(14*)",
+        "<4>=1",
+        "<4>(4)=2",
+        "(8*)",
+        "(*4)",
+        "[+1+3](1){9000}",
+        "[+5](1){9090}",
+        "[+4]",
+	};
+	auto ret = parse_cmd::parse_cmds(ss,vec);
+	print_con(ret,1);
+}
+void test_4()
+{
+	std::string s1 = "aaee*";
+	std::string s2 = "*eefc";
+
+	s1 = s1.erase(4,1);
+	vlogd($(s1));
+
+	s2 = s2.erase(0,1);
+	vlogd($(s2));
+}
+
+
 int main(int argc, char *argv[])
 {
     std::cout<<"===== init log ====="<<std::endl;
@@ -25,6 +125,16 @@ int main(int argc, char *argv[])
 		Tflogs::get()->set_level(vlevel4::e_info);
 		Tflogs::get()->init();
 	}
+
+
+#if 0
+	// test_1();
+	// test_2();
+	test_3();
+	// test_4();
+	return 0;
+#endif
+
 
 	std::cout<<"===== init config ====="<<std::endl;
 	{
@@ -113,3 +223,15 @@ int main(int argc, char *argv[])
     std::cout<<"== 程序退出 =="<<std::endl;
     return 0;
 };
+
+/*
+切割进左，
+切割进右，
+查找切割，
+偏移切割，
+循环格式化，
+条件格式化，
+标记长度字符，
+标记偏移长度，
+标记查找长度，
+*/

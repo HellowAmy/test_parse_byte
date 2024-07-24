@@ -10,7 +10,7 @@
 #include <sstream>
 
 #include "json.hpp"
-// #include "Tvlog.h"
+#include "Tvlog.h"
 
 using njson = nlohmann::json;
 
@@ -201,20 +201,20 @@ struct parse_cmd
             {
                 break;
             }
-
-            if(find_exist(cmd,'{'))
+            char first = cmd[0];
+            if(first == '{')
             {
                 parse_sp(data,cmd);
             }
-            if(find_exist(cmd,'(') && find_exist(cmd,'*'))
+            if(first == '(')
             {
                 parse_offset(data,cmd);
             }
-            if(find_exist(cmd,'<'))
+            if(first == '<')
             {
                 parse_star(data,cmd);
             }
-            if(find_exist(cmd,'#'))
+            if(first == '[')
             {
                 parse_list(data,cmd);
             }
@@ -228,6 +228,10 @@ struct parse_cmd
         {
             ret.push_back(a);
         }
+
+        print_con(data.front,1);
+        print_con(data.back,1);
+        print_con(data.star,1);
         return ret;
     }
 
@@ -235,6 +239,8 @@ struct parse_cmd
     {
         en_dire ed = find_star_dire(cmd);
         std::string sub = section_flg(cmd,'{','}');
+        less_star(sub);
+        vlogd($(sub));
 
         std::tuple<int,int> offset = parse_format::find_str_sub(data.data,sub);
         int ileft = std::get<0>(offset);
@@ -258,6 +264,7 @@ struct parse_cmd
     {
         en_dire ed = find_star_dire(cmd);
         std::string sub = section_flg(cmd,'(',')');
+        less_star(sub);
         int val = from_string<int>(sub);
 
         if(ed == e_right)
@@ -276,10 +283,53 @@ struct parse_cmd
 
     static void parse_star(ct_data &data,std::string cmd)
     {
+        if(find_exist(cmd,'('))
+        {
+            parse_star_offset(data,cmd);
+        }
+        else if(find_exist(cmd,'{'))
+        {
+            parse_star_find(data,cmd);
+        }
+        else 
+        {
+            parse_star_base(data,cmd);
+        }
+
+    }
+
+    static void parse_star_base(ct_data &data,std::string cmd)
+    {
         std::string snum = section_flg(cmd,'<','>');
         int num = from_string<int>(snum);
 
         auto tup = parse_format::carve_left(data.data,num);
+        data.star.push_back(std::get<0>(tup));
+    }
+
+    static void parse_star_find(ct_data &data,std::string cmd)
+    {
+        std::string snum = section_flg(cmd,'<','>');
+        int num = from_string<int>(snum);
+
+        std::string sfind = section_flg(cmd,'{','}');
+        std::tuple<int,int> offset = parse_format::find_str_sub(data.data,sfind);
+        int ileft = std::get<0>(offset);
+        int iright = std::get<1>(offset) + 1;
+
+        auto tup = parse_format::carve_left(std::string(data.data.begin() + iright,data.data.end()),num);
+        data.star.push_back(std::get<0>(tup));
+    }
+
+    static void parse_star_offset(ct_data &data,std::string cmd)
+    {
+        std::string snum = section_flg(cmd,'<','>');
+        int num = from_string<int>(snum);
+
+        std::string soffset = section_flg(cmd,'(',')');
+        int offset = from_string<int>(soffset);
+
+        auto tup = parse_format::carve_left(std::string(data.data.begin() + offset,data.data.end()) ,num);
         data.star.push_back(std::get<0>(tup));
     }
 
@@ -362,11 +412,11 @@ struct parse_cmd
     static en_dire find_star_dire(std::string str)
     {
         en_dire ed;
-        if(str[0] == '*')
+        if(str[1] == '*')
         {
             ed = e_left;
         }
-        else if(str[str.size() - 1] == '*')
+        else if(str[str.size() - 2] == '*')
         {
             ed = e_right;
         }
@@ -394,6 +444,19 @@ struct parse_cmd
             return std::string(str.begin() + ibegin + 1,str.begin() + iend);
         }
         return "";
+    }
+
+    static void less_star(std::string &str)
+    {
+        for(int i=0;i<str.size();i++)
+        {
+            char c = str[i];
+            if(c == '*')
+            {
+                str.erase(i,1);
+                return ;
+            }
+        }
     }
 
     static std::vector<std::string> section_flg(std::string str,char flg,bool skip_empty = true)

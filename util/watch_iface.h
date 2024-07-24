@@ -252,16 +252,20 @@ public:
         using namespace net_ipv4;
         size_t pos = 0;
         size_t len_ct = 0;
-        pack_udp_t pudp;
 
-        if(pudp.make_pack(std::string((char*)pkt_data,header->len),false))
-        {
-            if(_fn_data_cb) _fn_data_cb(&pudp);
-        }
-        else 
-        {
-            floge($("scan_packet_cb parse failed"));
-        }
+        pack_udp_t pudp;
+        pudp.data = std::string((char*)pkt_data,header->len);
+        
+        if(_fn_data_cb) _fn_data_cb(&pudp);
+
+        // if(pudp.make_pack(std::string((char*)pkt_data,header->len),false))
+        // {
+        //     if(_fn_data_cb) _fn_data_cb(&pudp);
+        // }
+        // else 
+        // {
+        //     floge($("scan_packet_cb parse failed"));
+        // }
     }
 
 public:

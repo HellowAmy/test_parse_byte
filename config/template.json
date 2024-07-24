@@ -4,23 +4,40 @@
             "pack_begin": "aaee",
             "pack_end": "eefc",
             "format_cmds": [
-                "{aaee}*",
-                "*{eefc}",
-                "(2)*",
-                "(4)*",
-                "(4)*",
-                "#[+4]"
+                "{aaee*}",
+                "{*eefc}",
+                "(2*)",
+                "(4*)",
+                "(4*)",
+                "[+4]"
             ]
         },
         {
             "pack_begin": "aaee",
             "pack_end": "eefc",
             "format_cmds": [
-                "{aaee}*",
-                "*{eefc}",
-                "(2)*",
-                "(4)*",
-                "#[+4+2]"
+                "{aaee*}",
+                "{*eefc}",
+                "(2*)",
+                "(4*)",
+                "[+4+2]"
+            ]
+        },        
+        {
+            "pack_begin": "SS",
+            "pack_end": "SS",
+            "format_cmds": [
+                "{SS*}",
+                "{*SS}",
+                "(DD*)",
+                "(*DD)",
+                "<DD>=0",
+                "<DD>(DD)=1",
+                "<DD>{DD}=2",
+                "[+D]",
+                "[+D+D]",
+                "[+D](DD){SS}",
+                "[+D+D](DD){SS}"
             ]
         }
     ]
