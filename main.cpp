@@ -162,6 +162,117 @@ void test_6()
 	print_con(ret,1);
 }
 
+void test_7()
+{
+	std::string snum = "c421";
+	std::string hex = Fbyte::sto_hex(snum);
+	unsigned short num;
+	memcpy(&num,hex.c_str(),sizeof(num));
+	unsigned short hnum = Fbyte::Tto_endian_host<short>(num);
+	vlogd($(num) $(hnum));
+}
+
+void test_8()
+{
+	std::string ss = "aaee1ffff0800490000000424c03000100000f9090000004c1b8c1b8c1b8c1b89a9deefc";
+	std::vector<std::string> vec {
+		"{aaee*}",
+        "{*eefc}",
+        "{424c*}",
+        "(14*)",
+		"!4![u:d:w]",// !4 8 16! [u d f w]
+		"!8!(4)[u:d:w]",
+		"!16!{0004}[u:d:w]",
+        "<4>=1",
+        "(8*)",
+        "(*4)",
+		":1:(0){9000}",
+        "[+1+3]",
+		":1:(0){9090}",
+        "[+5]",
+        "[+4]",
+	};
+	
+	auto ret = parse_cmd::parse_cmds(ss,vec);
+	print_con(ret,1);
+}
+
+void test_9()
+{
+	{
+		bool is_float =false;
+		bool is_swap = true;
+		bool is_unsigned = true;
+		std::string ss = "9000";
+		std::string ret = parse_cmd::hex_format_number(ss,is_float,is_swap,is_unsigned);
+		vlogd($(ret));
+	}
+	{
+		bool is_float =false;
+		bool is_swap = true;
+		bool is_unsigned = true;
+		std::string ss = "90004456";
+		std::string ret = parse_cmd::hex_format_number(ss,is_float,is_swap,is_unsigned);
+		vlogd($(ret));
+	}
+	{
+		bool is_float = true;
+		bool is_swap = true;
+		bool is_unsigned = true;
+		std::string ss = "4149374B";// 浮点数大小端问题：所有字节反转，小数字节再次反转
+		std::string ret = parse_cmd::hex_format_number(ss,is_float,is_swap,is_unsigned);
+		vlogd($(ret));
+	}
+	{
+		bool is_float = true;
+		bool is_swap = false;
+		bool is_unsigned = true;
+		std::string ss = "4B374941";
+		std::string ret = parse_cmd::hex_format_number(ss,is_float,is_swap,is_unsigned);
+		vlogd($(ret));
+	}
+	{
+		bool is_float = true;
+		bool is_swap = false;
+		bool is_unsigned = true;
+		std::string ss = "4B3749414B374941";
+		std::string ret = parse_cmd::hex_format_number(ss,is_float,is_swap,is_unsigned);
+		vlogd($(ret));
+	}
+	{
+		bool is_float = true;
+		bool is_swap = true;
+		bool is_unsigned = true;
+		std::string ss = "4B3749414B374941";
+		std::string ret = parse_cmd::hex_format_number(ss,is_float,is_swap,is_unsigned);
+		vlogd($(ret));
+	}
+	{
+		bool is_float = true;
+		bool is_swap = true;
+		bool is_unsigned = true;
+		std::string ss = "a27c41cb6f30fe40";
+		std::string ret = parse_cmd::hex_format_number(ss,is_float,is_swap,is_unsigned);
+		vlogd($(ret));
+	}
+	{
+		bool is_float = true;
+		bool is_swap = false;
+		bool is_unsigned = true;
+		std::string ss = "a27c41cb6f30fe40";
+		std::string ret = parse_cmd::hex_format_number(ss,is_float,is_swap,is_unsigned);
+		vlogd($(ret));
+	}
+	{
+		double bnum = 123654.987123;
+		char buf[8] = {0};
+		memcpy(buf,&bnum,sizeof(bnum));
+		auto s1 = Fbyte::hto_hex(std::string(buf,sizeof(buf)));
+		vlogd($(s1)); // a27c41cb6f30fe40
+	}
+
+}
+
 int main(int argc, char *argv[])
 {
     std::cout<<"===== init log ====="<<std::endl;
@@ -178,7 +289,10 @@ int main(int argc, char *argv[])
 	// test_3();
 	// test_4();
 	// test_5();
-	test_6();
+	// test_6();
+	// test_7();
+	// test_8();
+	test_9();
 	return 0;
 #endif
 

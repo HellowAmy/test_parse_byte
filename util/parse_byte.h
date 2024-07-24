@@ -9,6 +9,7 @@
 #include <deque>
 #include <sstream>
 
+#include "Fbyte.h"
 #include "json.hpp"
 // #include "Tvlog.h"
 
@@ -305,6 +306,11 @@ struct parse_cmd
         }
     }
 
+    static void parse_number(ct_data &data,std::string cmd)
+    {
+
+    }
+
     static void parse_star(ct_data &data,std::string cmd)
     {
         if(find_exist(cmd,'('))
@@ -434,6 +440,61 @@ struct parse_cmd
         }
     }
 
+
+    static std::string hex_format_number(std::string val,bool is_float,bool is_swap,bool is_unsigned)
+    {
+        std::string ret;
+        size_t len = val.size();
+
+        if(is_float)
+        {
+            if(val.size() == 8)
+            {
+                ret = Tto_num_endian<float>(val,is_swap);
+            }
+            if(val.size() == 16)
+            {
+                ret = Tto_num_endian<double>(val,is_swap);
+            }
+        }
+        else 
+        {
+            if(val.size() == 4)
+            {
+                if(is_unsigned)
+                {
+                    ret = Tto_num_endian<unsigned short>(val,is_swap);
+                }
+                else 
+                {
+                    ret = Tto_num_endian<short>(val,is_swap);
+                }
+            }
+            if(val.size() == 8)
+            {
+                if(is_unsigned)
+                {
+                    ret = Tto_num_endian<unsigned int>(val,is_swap);
+                }
+                else 
+                {
+                    ret = Tto_num_endian<int>(val,is_swap);
+                }
+            }
+            if(val.size() == 16)
+            {
+                if(is_unsigned)
+                {
+                    ret = Tto_num_endian<unsigned long long>(val,is_swap);
+                }
+                else 
+                {
+                    ret = Tto_num_endian<long long>(val,is_swap);
+                } 
+            }
+        }
+        return ret;
+    }
 
 
     static en_dire find_star_dire(std::string str)
@@ -565,6 +626,25 @@ struct parse_cmd
         return t;
     }
 
+    template<typename T>
+    static T Tmemcpy_num(const std::string& str)
+    { 
+        T t; 
+        memcpy(&t,str.c_str(),sizeof(t));
+        return t;
+    }
+
+    template<typename T>
+    static std::string Tto_num_endian(const std::string& str,bool is_swap)
+    { 
+        std::string shex = Fbyte::sto_hex(str);
+        T num = Tmemcpy_num<T>(shex);
+        if(is_swap)
+        {
+            num = Fbyte::Tto_endian_host<T>(num);
+        }
+        return std::to_string(num);
+    }
 };
 
 #endif // PARSE_BYTE_H
