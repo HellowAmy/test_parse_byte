@@ -11,7 +11,7 @@
 
 #include "Fbyte.h"
 #include "json.hpp"
-// #include "Tvlog.h"
+#include "Tvlog.h"
 
 using njson = nlohmann::json;
 
@@ -230,6 +230,10 @@ struct parse_cmd
             {
                 parse_skip_cond(data,cmd);
             }
+            if(first == '!')
+            {
+                parse_number(data,cmd);
+            }
         }
 
         for(auto a: data.front)
@@ -308,7 +312,88 @@ struct parse_cmd
 
     static void parse_number(ct_data &data,std::string cmd)
     {
+        if(find_exist(cmd,'('))
+        {
+            parse_number_offset(data,cmd);
+        }
+        else if(find_exist(cmd,'{'))
+        {
+            parse_number_find(data,cmd);
+        }
+        else 
+        {
+            parse_number_base(data,cmd);
+        }
+    }
 
+    static void parse_number_base(ct_data &data,std::string cmd)
+    {
+        std::string slen = section_flg(cmd,'!','!');
+        int len = from_string<int>(slen);
+
+        auto tup_val = parse_format::carve_left(data.data,len);
+        std::string sval = std::get<0>(tup_val);
+        parse_number_op(data,cmd,sval);
+    }
+
+    static void parse_number_find(ct_data &data,std::string cmd)
+    {
+        std::string slen = section_flg(cmd,'!','!');
+        int len = from_string<int>(slen);
+
+        std::string sfind = section_flg(cmd,'{','}');
+
+        auto tup_val = parse_format::find_str_sub(data.data,sfind);
+        int iright = std::get<0>(tup_val);
+        std::string sval = std::string(data.data.begin() +iright +1,data.data.begin() +len +iright +1); 
+        parse_number_op(data,cmd,sval);
+    }
+
+    static void parse_number_offset(ct_data &data,std::string cmd)
+    {
+        std::string slen = section_flg(cmd,'!','!');
+        int len = from_string<int>(slen);
+
+        std::string soffset = section_flg(cmd,'(',')');
+        int offset = from_string<int>(soffset);
+
+        std::string sval = std::string(data.data.begin() +offset,data.data.begin() +offset +len); 
+        parse_number_op(data,cmd,sval);
+    }
+
+    static void parse_number_op(ct_data &data,std::string cmd,std::string sval)
+    {
+        bool is_float = false;
+        bool is_swap = false;
+        bool is_unsigned = false;
+        std::string sflg = section_flg(cmd,'[',']');
+        if(find_exist(sflg,'u'))
+        {
+            is_unsigned = true;
+        }
+        if(find_exist(sflg,'d'))
+        {
+            is_float = false;
+        }
+        if(find_exist(sflg,'f'))
+        {
+            is_float = true;
+        }
+        if(find_exist(sflg,'w'))
+        {
+            is_swap = true;
+        }
+
+        std::string ret = hex_format_number(sval,is_float,is_swap,is_unsigned);
+        if(is_float)
+        {
+            ret = "[f: " + ret + " ]";
+        }
+        else 
+        {
+            ret = "[d: " + ret + " ]";
+        }
+        data.front.push_back(ret);
     }
 
     static void parse_star(ct_data &data,std::string cmd)
