@@ -174,27 +174,48 @@ void test_7()
 
 void test_8()
 {
-	std::string ss = "aaee1ffff0800490000000424c03000100000f9090000004c1b8c1b8c1b8c1b89a9deefc";
-	std::vector<std::string> vec {
-		"{aaee*}",
-        "{*eefc}",
-        "{424c*}",
-        "(14*)",
-		"!4![u:d:w]",
-		"!8!(4)[u:f:d:w]",
-		"!16!{0004}[u:f:d:w]",
-        "<4>=1",
-        "(8*)",
-        "(*4)",
-		":1:(0){9000}",
-        "[+1+3]",
-		":1:(0){9090}",
-        "[+5]",
-        "[+4]",
-	};
+	{
+		std::string ss = "aaee1ffff0800490000000424c03000100000f9090000004c1b8c1b8c1b8c1b89a9deefc";
+		std::vector<std::string> vec {
+			"{aaee*}",
+			"{*eefc}",
+			"{424c*}",
+			"(14*)",
+			"!4![u:d:w]",
+			"!8!(4)[u:f:d:w]",
+			"!16!{0004}[u:f:d:w]",
+			"<4>=1",
+			"(8*)",
+			":1:(1){9000}",
+			"#这是注释#",
+			"(*4)",
+			":1:(0){9000}",
+			"[+1+3]",
+			":1:(0){9090}",
+			"[+5]",
+			"[+4]",
+		};
+		
+		auto ret = parse_cmd::parse_cmds(ss,vec);
+		print_con(ret,1);
+	}
+
+
+	{
+		std::string ss = "aaee485454502f312e3120323030204f4b0d0a5365727665723a206e67696e780d0a446174653a204672692c203236204a756c20323032342030333a32333a313820474d540d0aeefc";
+		std::vector<std::string> vec {
+			"(4*)",
+			"!0!{*0d0a}[]",
+			"{0d0a*}",
+			"!0!{*0d0a}[]",
+			"{0d0a*}",
+			"!0!{*0d0a}[]",
+			"{0d0a*}",
+		};
 	
-	auto ret = parse_cmd::parse_cmds(ss,vec);
-	print_con(ret,1);
+		auto ret = parse_cmd::parse_cmds(ss,vec);
+		print_con(ret,1);
+	}
 }
 
 void test_9()
@@ -204,6 +225,22 @@ void test_9()
 		bool is_swap = true;
 		bool is_unsigned = true;
 		std::string ss = "9000";
+		std::string ret = parse_cmd::hex_format_number(ss,is_float,is_swap,is_unsigned);
+		vlogd($(ret));
+	}
+	{
+		bool is_float =false;
+		bool is_swap = false;
+		bool is_unsigned = true;
+		std::string ss = "90";
+		std::string ret = parse_cmd::hex_format_number(ss,is_float,is_swap,is_unsigned);
+		vlogd($(ret));
+	}
+	{
+		bool is_float =false;
+		bool is_swap = true;
+		bool is_unsigned = true;
+		std::string ss = "0090";
 		std::string ret = parse_cmd::hex_format_number(ss,is_float,is_swap,is_unsigned);
 		vlogd($(ret));
 	}
@@ -273,6 +310,185 @@ void test_9()
 
 }
 
+void test_10()
+{
+	{
+		std::string ss = "485454502f312e31";
+		std::string hex = Fbyte::sto_hex(ss);
+		vlogd($(hex));
+	}
+	{
+		std::string ss = "323030";
+		std::string hex = Fbyte::sto_hex(ss);
+		vlogd($(hex));
+	}
+	{
+		bool is_float = false;
+		bool is_swap = false;
+		bool is_unsigned = false;
+		std::string ss = "485454502f312e31";
+		std::string ret = parse_cmd::hex_format_number(ss,is_float,is_swap,is_unsigned);
+		vlogd($(ret));
+	}
+	{
+		bool is_float = false;
+		bool is_swap = false;
+		bool is_unsigned = false;
+		std::string ss = "3134610d0a";
+		std::string ret = parse_cmd::hex_format_number(ss,is_float,is_swap,is_unsigned);
+		vlogd($(ret));
+	}
+	{
+		std::string str = "b4";
+		std::string shex = Fbyte::sto_hex(str);
+        unsigned short num = parse_cmd::Tmemcpy_num<unsigned short>(shex);
+		vlogd($(num)); 
+
+		// b4a3ebab  180.163.235.171
+		// ac10158c  172.16.21.140
+	}
+
+
+
+
+
+	{
+		std::string str = "b4a3ebab";
+		std::string w = parse_cmd::to_host_ip(str);
+		vlogd($(w)); 
+	}
+	{
+		std::string str = "ac10158c";
+		std::string w = parse_cmd::to_host_ip(str);
+		vlogd($(w)); 
+	}
+}
+
+void test_11()
+{
+	{
+		std::string ss = "00e04c320a07e8a66099fc77080045000247bdbd400033062608b4a3ebabac10158c0050c96c59fa291dc827b264501801f5329b0000485454502f312e3120323030204f4b0d0a5365727665723a206e67696e780d0a446174653a204672692c203236204a756c20323032342030333a32333a313820474d540d0a436f6e74656e742d547970653a206170706c69636174696f6e2f6f637465742d73747265616d0d0a5472616e736665722d456e636f64696e673a206368756e6b65640d0a436f6e6e656374696f6e3a20636c6f73650d0a43616368652d436f6e74726f6c3a206e6f2d63616368650d0a707261676d613a206e6f2d63616368650d0a0d0a3134610d0a0a040140613700010000110250833bb629eae348cb7560c8fbcbaa447c6cc1ee54ed932b1e3d7509bb8cb65262812dcce23d9c1b9a1f20516e176b8cb1d538a7e8843a5c33bc3bf6248cfd1a20001ef57c15235ba6d7c932d64d71c406069b079f3cff52a70ba00fa004aa06a650f654a601a506a703f303f600a606f057a604a101a103f403b952a400a353f457a107a00fa052a507aa54f60ff10ef704a555f601f706a004f40ea50ea705f653a71da605a705a70fab06f657a301a501a452a705f306ab03aa54aa07a154a300a406a650f60fa654a750f101f357a102f150a055a200a106f404a404a657ab01a4559b07a218a23fa23fa23fa23fa305a6029b009b3f9b66da78e46cfc64e855ff7bb955a07fa47bf877e57bd677e57bd663eb79da4eaa55a07ce779e753db45f757de5cc641e455a00fff52da78eb6fe802af3f9b069b069b3c9f3c0d0a300d0a0d0a";
+		std::vector<std::string> vec {
+			"(24*)",
+			"<4>=0",
+			":1:(0){0800}",
+			"#这是IP协议#",
+			"#这是包体总长度#",
+			"!4!(8)[u:d:w]",
+			"(22*)",
+			"<2>=1",
+			":1:(1){06}",
+			"#这是TCP协议#",
+			"!2![u:d]",
+			"(6*)",
+			"#源地址#",
+			"!8![h]",
+			"(8*)",
+			"#目标地址#",
+			"!8![h]",
+			"(8*)",
+			"(40*)",
+			"!34![]",
+			"#Http协议返回值#",
+			"!0!{*0d0a}[]",
+			"{0d0a*}",
+			"!0!{*0d0a}[]",
+			"{0d0a*}",
+			"!0!{*0d0a}[]",
+			"{0d0a*}",
+			"!0!{*0d0a}[]",
+			"{0d0a*}",
+			"!0!{*0d0a}[]",
+			"{0d0a*}",
+			"!0!{*0d0a}[]",
+			"{0d0a*}",
+			"!0!{*0d0a}[]",
+			"{0d0a*}",
+			"!0!{*0d0a}[]",
+			"{0d0a*}",
+			"!0!{*0d0a}[]",
+			"{0d0a*}",
+			"!0!{*0d0a}[]",
+			"{0d0a*}",
+			"[+10000]",
+		};
+
+		auto ret = parse_cmd::parse_pack(ss,vec,"","");
+		print_con(ret,1);
+
+	}
+}
+
+void test_12()
+{
+	// "ffffffffffff708bcd7fda620800
+	// 450000407a09000080113cc2
+	// ac1015c2
+	// ac1015ff
+	// 202b
+	// 202b
+	// 002c
+	// 834a  // 41 C7 EB 85 41c7eb85
+	// 4f4d01c020e00000cd7598012e965cb5dbdb58400177ad6fc50ab91df458a84d57910000";
+	// std::string ss = "ffffffffffff708bcd7fda620800450000407a09000080113cc2ac1015c2ac1015ff202b202b002c834aaaee1ffff0800490000000424c03000100000f9090000004c1b8c1b8c1b8c1b89a9deefc";
+	std::string ss = "ffffffffffff708bcd7fda620800450000407a09000080113cc2ac1015c2ac1015ff202b202b002c834aaaee1ffff0800490000000424c03000100000f90955000044128000041c7eb859a9deefc";
+		std::vector<std::string> vec {
+			"(28*)",
+			"(24*)",
+			"#源IP#",
+			"!8![h]",
+			"(8*)",
+			"#目标IP#",
+			"!8![h]",
+			"(8*)",
+			"#源端口#",
+			"!4![u:d:w]",
+			"(4*)",
+			"#目标端口#",
+			"!4![u:d:w]",
+			"(4*)",
+			"#长度#",
+			"!4![u:d:w]",
+			"(4*)",
+			"(4*)",
+			"#接下来是数据包部分#",
+			"#检测包头包尾#",
+			"{aaee*}",
+			"{*eefc}",
+			"#查找标记位#",
+			"{424c*}",
+			"#偏移配置字节#",
+			"(14*)",
+			"<4>=0",
+			"#内容长度#",
+			"!4!(4)[u:d:w]",
+			"(8*)",
+			"#判断数据类型#",
+			":2:(0){9000}",
+			"#9000类型#",
+			"[+4]",
+			":5:(0){9550}",
+			"#9550类型#",
+			"!8![f:w]",
+			"!8!(8)[f:w]",
+			"!4!(12)[u:d:w]",
+			"(20*)"
+		};
+	auto ret = parse_cmd::parse_pack(ss,vec,"","");
+	print_con(ret,1);
+
+
+}
+
+void test_13()
+{
+#ifdef WIN32
+    system("taskkill /f /t /im DigitalConference.Web.Entry.exe");
+#else
+    system("killall DigitalConference.Web.Entry");
+#endif
+}
+
 int main(int argc, char *argv[])
 {
     std::cout<<"===== init log ====="<<std::endl;
@@ -283,7 +499,7 @@ int main(int argc, char *argv[])
 	}
 
 
-#if 1
+#if 0
 	// test_1();
 	// test_2();
 	// test_3();
@@ -291,8 +507,12 @@ int main(int argc, char *argv[])
 	// test_5();
 	// test_6();
 	// test_7();
-	test_8();
+	// test_8();
 	// test_9();
+	// test_10();
+	// test_11();
+	test_12();
+	// test_13();
 	return 0;
 #endif
 
@@ -395,4 +615,52 @@ int main(int argc, char *argv[])
 标记长度字符，
 标记偏移长度，
 标记查找长度，
+
+
+"符号说明: 字符 * 代表剩余字符左偏,或者右偏, DD 代表数字, SS 代表字符
+"命令说明: 跳过命令条件触发时, 会跳过接下来的多条命令, 可用于创建不同分支的格式化效果
+"长度类型: d:[4: short 8: int 16: long long] ,f:[8: float 16: double]
+"转换操作: [u:d:f:w] [u: 转为无符号] [d: 转为整数-具体类型看长度] [f: 转为浮点数-具体类型看长度] [w: 大小端字节序转换]
+"
+"命令如下:
+"{SS*}"          // 查找指定 SS 字符并截断 ,左偏,
+"{*SS}"          // 查找指定 SS 字符并截断 ,右偏
+"(DD*)"          // 偏移 DD 个字符并截断 ,左偏"
+"(*DD)"          // 偏移 DD 个字符并截断 ,右偏"
+"[+D]"           // 格式列表 ,循环切割 DD 个位置 ,直到剩余字符为空
+"[+D1+D2]"       // 格式分段列表 ,循环切割 DX 个位置 ,可以由多个 DX 组合,直到剩余字符为空
+"<DD>=0"         // 从当前位置标记 DD 个字符 ,放入标记容器的 0 索引
+"<D1>(DD)=1"     // 偏移 DD 个位置, 标记 DD 个字符 ,放入标记容器的 1 索引
+"<D1>{SS}=2"     // 查找到 SS 字符位置, 标记 DD 个字符 ,放入标记容器的 2 索引
+":D1:(D2){SS}"       	// 跳过命令条件 ,D2 为对比的标记容器索引数据 ,SS 为对比数据 ,当条件不满足时跳过 D1 条数据 ,否则继续执行
+"!DD![u:d:f:w]"      	// 字节转为数值 ,DD 为切割的长度并将字节转为对应类型 , [] 内选项对应转成无符号类型、大小端转换、浮点数三种选项
+"!DD!(D1)[u:d:f:w]"  	// 偏移切割字节转为数值 ,D1 为偏移位置后切割 DD 长度的字节 ,其他相关同上
+"!DD!{SS}[u:d:f:w]"  	// 查找切割字节转为数值 ,SS 为查找的偏移子串 ,其他相关同上
+
+
+符号说明: 字符 * 代表剩余字符左偏,或者右偏, DD 代表数字, SS 代表字符"
+命令说明: 跳过命令条件触发时, 会跳过接下来的多条命令, 可用于创建不同分支的格式化效果"
+长度类型: d:[4: short 8: int 16: long long] ,f:[8: float 16: double]"
+转换操作: [u:d:f:w:h] [u: 转为无符号] [d: 转为整数-具体类型看长度] [f: 转为浮点数] [w: 大小端字节序转换] [h: 转为点十进制IP]"
+转换操作: [] 转换操作的无选项是一种特殊情况，该操作会将十六进制字符串退化成二进制数据，可以用于字符串显示"
+
+命令如下:
+{SS*}          // 查找指定 SS 字符并截断 ,左偏"
+{*SS}          // 查找指定 SS 字符并截断 ,右偏"
+(DD*)          // 偏移 DD 个字符并截断 ,左偏"
+(*DD)          // 偏移 DD 个字符并截断 ,右偏"
+<DD>=0         // 从当前位置标记 DD 个字符 ,放入标记容器的 0 索引"
+[+D]           // 格式列表 ,循环切割 DD 个位置 ,直到剩余字符为空"
+[+D1+D2]       // 格式分段列表 ,循环切割 DX 个位置 ,可以由多个 DX 组合,直到剩余字符为空"
+<D1>(DD)=1     // 偏移 DD 个位置, 标记 DD 个字符 ,放入标记容器的 1 索引"
+<D1>{SS}=2     // 查找到 SS 字符位置, 标记 DD 个字符 ,放入标记容器的 2 索引"
+<-*>{SS}=3     // 查找到 SS 字符位置, 标记当前位置到 SS 字符最左下标部分 ,放入标记容器的 3 索引"
+:D1:(D2){SS}       // 跳过命令条件 ,D2 为对比的标记容器索引数据 ,SS 为对比数据 ,当条件不满足时跳过 D1 条数据 ,否则继续执行"
+!DD![u:d:f:w:h]    // 字节转为数值 ,DD 为切割的长度并将字节转为对应类型 , [] 内提供转换选项，如果无选项会退化成字符串"
+!DD!(D1)[]         // 偏移切割字节转为数值 ,D1 为偏移位置后切割 DD 长度的字节 ,其他相关同上"
+!DD!{SS}[]         // 查找切割字节转为数值 ,SS 为查找的偏移子串 ,其他相关同上"
+
+
 */
+
+

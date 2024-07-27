@@ -143,14 +143,15 @@ struct parse_cmd
         ct_save_index index;
     };
 
+    // 通过命令分析数据的状态结构体，分析的结果是目标两个目标容器的累计
     struct ct_data
     {
-        bool run = true;
-        int skip = 0;
-        std::deque<std::string> star;
-        std::deque<std::string> front;
-        std::deque<std::string> back;
-        std::string data;
+        bool run = true;    // 运行标记，判断是否继续执行解析命令
+        int skip = 0;       // 跳过命令，数量为跳过接来下的 N 条命令，用于执行分支命令
+        std::deque<std::string> star;   // 标记容器，将需要标记的字符放入容器，用于对比是否执行部分命令
+        std::deque<std::string> front;  // 头部容器，是目标容器，从剩余字符切割内容后放入目标容器，或称左端容器
+        std::deque<std::string> back;   // 尾部容器，是目标容器，从剩余字符切割内容后放入目标容器，或称右端容器
+        std::string data; // 剩余字符，命令主要针对剩余字符进行解析，解析的结果放入头或尾部容器，放入的目标容器是 * 号的同侧位置
     };
 
     static std::vector<std::string> parse_pack(std::string str,std::vector<std::string> cmds,std::string begin,std::string end)
@@ -171,6 +172,11 @@ struct parse_cmd
     static std::vector<std::string> parse_data_arr(std::string str,std::string begin,std::string end)
     {
         std::vector<std::string> ret;
+        if(begin == "" || end == "") 
+        {
+            ret.push_back(str);
+            return ret;
+        }
 
         while(true)
         {
@@ -233,6 +239,10 @@ struct parse_cmd
             if(first == '!')
             {
                 parse_number(data,cmd);
+            }
+            if(first == '#')
+            {
+                parse_node(data,cmd);
             }
         }
 
@@ -343,10 +353,22 @@ struct parse_cmd
 
         std::string sfind = section_flg(cmd,'{','}');
 
-        auto tup_val = parse_format::find_str_sub(data.data,sfind);
-        int iright = std::get<0>(tup_val);
-        std::string sval = std::string(data.data.begin() +iright +1,data.data.begin() +len +iright +1); 
-        parse_number_op(data,cmd,sval);
+        if(find_exist(cmd,'*'))
+        {
+            less_star(sfind);
+            auto tup_val = parse_format::find_str_sub(data.data,sfind);
+            int ileft = std::get<0>(tup_val);
+            std::string sval = std::string(data.data.begin(),data.data.begin() +ileft +1); 
+            parse_number_op(data,cmd,sval);
+        }
+        else 
+        {
+            auto tup_val = parse_format::find_str_sub(data.data,sfind);
+            int iright = std::get<0>(tup_val);
+            std::string sval = std::string(data.data.begin() +iright +1,data.data.begin() +len +iright +1); 
+            parse_number_op(data,cmd,sval);
+        }
+
     }
 
     static void parse_number_offset(ct_data &data,std::string cmd)
@@ -366,6 +388,7 @@ struct parse_cmd
         bool is_float = false;
         bool is_swap = false;
         bool is_unsigned = false;
+        bool is_host_ip = false;
         std::string sflg = section_flg(cmd,'[',']');
         if(find_exist(sflg,'u'))
         {
@@ -383,15 +406,33 @@ struct parse_cmd
         {
             is_swap = true;
         }
+        if(find_exist(sflg,'h'))
+        {
+            is_host_ip = true;
+        }
+
+        if(is_host_ip == true)
+        {   
+            std::string ret = to_host_ip(sval);
+            data.front.push_back(ret);
+            return;
+        }
 
         std::string ret = hex_format_number(sval,is_float,is_swap,is_unsigned);
-        if(is_float)
+        if(is_float == false && is_swap == false && is_unsigned == false)
         {
-            ret = "[f: " + ret + " ]";
+            ret = "[s: " + ret + " ]";
         }
         else 
         {
-            ret = "[d: " + ret + " ]";
+            if(is_float)
+            {
+                ret = "[f: " + ret + " ]";
+            }
+            else 
+            {
+                ret = "[d: " + ret + " ]";
+            }
         }
         data.front.push_back(ret);
     }
@@ -411,6 +452,13 @@ struct parse_cmd
             parse_star_base(data,cmd);
         }
 
+    }
+
+    static void parse_node(ct_data &data,std::string cmd)
+    {
+        std::string node = section_flg(cmd,'#','#');
+        node = "[n: " + node + " ]";
+        data.front.push_back(node);
     }
 
     static void parse_star_base(ct_data &data,std::string cmd)
@@ -531,51 +579,58 @@ struct parse_cmd
         std::string ret;
         size_t len = val.size();
 
-        if(is_float)
+        if(is_float == false && is_swap == false && is_unsigned == false)
         {
-            if(val.size() == 8)
-            {
-                ret = Tto_num_endian<float>(val,is_swap);
-            }
-            if(val.size() == 16)
-            {
-                ret = Tto_num_endian<double>(val,is_swap);
-            }
+            ret = Fbyte::sto_hex(val);
         }
         else 
         {
-            if(val.size() == 4)
+            if(is_float)
             {
-                if(is_unsigned)
+                if(val.size() == 8)
                 {
-                    ret = Tto_num_endian<unsigned short>(val,is_swap);
+                    ret = Tto_num_endian<float>(val,is_swap);
                 }
-                else 
+                if(val.size() == 16)
                 {
-                    ret = Tto_num_endian<short>(val,is_swap);
+                    ret = Tto_num_endian<double>(val,is_swap);
                 }
             }
-            if(val.size() == 8)
+            else 
             {
-                if(is_unsigned)
+                if(val.size() <= 4)
                 {
-                    ret = Tto_num_endian<unsigned int>(val,is_swap);
+                    if(is_unsigned)
+                    {
+                        ret = Tto_num_endian<unsigned short>(val,is_swap);
+                    }
+                    else 
+                    {
+                        ret = Tto_num_endian<short>(val,is_swap);
+                    }
                 }
-                else 
+                if(val.size() == 8)
                 {
-                    ret = Tto_num_endian<int>(val,is_swap);
+                    if(is_unsigned)
+                    {
+                        ret = Tto_num_endian<unsigned int>(val,is_swap);
+                    }
+                    else 
+                    {
+                        ret = Tto_num_endian<int>(val,is_swap);
+                    }
                 }
-            }
-            if(val.size() == 16)
-            {
-                if(is_unsigned)
+                if(val.size() == 16)
                 {
-                    ret = Tto_num_endian<unsigned long long>(val,is_swap);
+                    if(is_unsigned)
+                    {
+                        ret = Tto_num_endian<unsigned long long>(val,is_swap);
+                    }
+                    else 
+                    {
+                        ret = Tto_num_endian<long long>(val,is_swap);
+                    } 
                 }
-                else 
-                {
-                    ret = Tto_num_endian<long long>(val,is_swap);
-                } 
             }
         }
         return ret;
@@ -701,6 +756,28 @@ struct parse_cmd
         return false;
     }
 
+    static std::string to_host_ip(std::string shex)
+    {
+        std::vector<std::string> vec;
+        for(int i=0;i<shex.size();i=i+2)
+        {
+            std::string sbyte;
+            sbyte.push_back(shex[i]);
+            sbyte.push_back(shex[i+1]);
+
+		    std::string stwo = Fbyte::sto_hex(sbyte);
+            unsigned short num = parse_cmd::Tmemcpy_num<unsigned short>(stwo);
+            vec.push_back(std::to_string(num));
+        }
+        
+        std::string ret;
+        for(int i=0;i<vec.size() - 1;i++)
+        {
+            ret += vec[i] + ".";
+        }
+        ret += vec[vec.size() - 1];
+        return ret;
+    }
 
     template<typename T>
     static T from_string(const std::string& str)

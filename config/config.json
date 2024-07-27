@@ -4,8 +4,8 @@
     "commit3": "ip and udp and host 10.1.0.2 or 224.0.2.4",
     "commit4": "ip and udp and src 10.1.0.2 or 224.0.2.4",
     "commit5": "ip and udp and src 10.1.0.2 or 224.0.2.4 or 169.168.17.1",
-    "filter_com": "ip and udp and src 172.16.21.23",
+    "filter_com": "udp or tcp",
     "ifac_name": "\\Device\\NPF_{54412DC4-C839-42FC-8B9F-9AF2570B9B32}",
     "ifac_index": "4",
-    "mode_index": "0"
+    "mode_index": "2"
 }
